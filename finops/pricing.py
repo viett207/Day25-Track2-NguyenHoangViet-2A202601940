@@ -102,3 +102,25 @@ def spot_checkpoint_cost(
         "on_demand_cost": round(on_demand_cost, 2),
         "savings_pct": round(savings_pct, 1),
     }
+
+
+def cache_is_worth_it(
+    avg_cache_reads: float,
+    write_cost_per_m: float = 3.75,
+    read_discount: float = 0.10,
+    base_input_price_per_m: float = 3.00,
+) -> bool:
+    """Prompt caching is net-positive when accumulated read savings exceed write/storage cost.
+
+    Break-even reads = write_cost_per_m / ((1 - read_discount) * base_input_price_per_m).
+    Returns True if avg_cache_reads >= break_even_reads.
+    """
+    if avg_cache_reads <= 0:
+        return False
+    if write_cost_per_m <= 0:
+        return True
+    savings_per_read = (1.0 - read_discount) * base_input_price_per_m
+    if savings_per_read <= 0:
+        return False
+    break_even_reads = write_cost_per_m / savings_per_read
+    return avg_cache_reads >= break_even_reads
